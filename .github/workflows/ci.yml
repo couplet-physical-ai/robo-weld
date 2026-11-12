@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  cpu-demo:
+    name: CPU synthetic demo and tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run unit tests
+        env:
+          PYTHONPATH: src
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: python -m unittest discover -s tests -v
+      - name: Run documented laptop quickstart smoke test
+        env:
+          PYTHONPATH: src
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: python -m robo_weld.cpu_demo --seed 7
+      - name: Verify locked uv install and installed command
+        run: |
+          python -m pip install --disable-pip-version-check uv==0.13.6
+          uv sync --locked
+          uv run --locked robo-weld-cpu --seed 7
+      - name: Syntax-check optional simulator demo without simulator dependencies
+        run: python -m py_compile demos/isaac_lab/procedural_cell.py
